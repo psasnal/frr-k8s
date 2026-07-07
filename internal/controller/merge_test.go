@@ -1762,6 +1762,17 @@ func localPrefPrefixListFor(neigID string, localPref int, ipFamily string, prefi
 	}
 }
 
+func asPathPrependPrefixListFor(neigID string, asPathPrepend []string, ipFamily string, prefixes []string) frr.AsPathPrependPrefixList {
+	return frr.AsPathPrependPrefixList{
+		PrefixList: frr.PrefixList{
+			Name:     asPathPrependPrefixListName(neigID, asPathPrepend, ipFamily),
+			Prefixes: sets.New(prefixes...),
+			IPFamily: ipFamily,
+		},
+		AsPathPrepend: asPathPrepend,
+	}
+}
+
 func communityComparer(a, b community.BGPCommunity) bool {
 	if a != nil && b != nil {
 		return a.String() == b.String()

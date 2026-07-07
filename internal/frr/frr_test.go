@@ -222,6 +222,47 @@ func TestSingleSessionWithNextHopV6(t *testing.T) {
 	testCheckConfigFile(t)
 }
 
+func TestSingleSessionWithAsPathPrepend(t *testing.T) {
+	testSetup(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	frr := testNewFRR(t, ctx)
+	defer cancel()
+
+	config := Config{
+		Routers: []*RouterConfig{
+			{
+				MyASN: 65000,
+				Neighbors: []*NeighborConfig{
+					{
+						IPFamily: ipfamily.IPv4,
+						ASN:      "65001",
+						Addr:     "192.168.1.2",
+						Port:     ptr.To[uint16](4567),
+						Outgoing: AllowedOut{
+							PrefixesV4: []string{
+								"192.169.1.0/24",
+								"192.169.2.0/24",
+								"192.170.1.0/22",
+							},
+							AsPathPrependPrefixesModifiers: []AsPathPrependPrefixList{
+								asPathPrependPrefixListFor("65001@192.168.1.2", []string{"65000", "65000", "65000"}, "ip", "192.169.1.0/24", "192.170.1.0/22"),
+							},
+						},
+					},
+				},
+				IPV4Prefixes: []string{"192.169.1.0/24", "192.169.2.0/24", "192.170.1.0/22"},
+			},
+		},
+		Loglevel: LevelFrom(logging.LevelInfo),
+	}
+	err := frr.ApplyConfig(&config)
+	if err != nil {
+		t.Fatalf("Failed to apply config: %s", err)
+	}
+
+	testCheckConfigFile(t)
+}
+
 func TestTwoRoutersTwoNeighbors(t *testing.T) {
 	testSetup(t)
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1426,4 +1467,19 @@ func communityPrefixListName(neighborID string, comm community.BGPCommunity, ipF
 		return fmt.Sprintf("%s-large:%s-%s-community-prefixes", neighborID, comm, ipFamily)
 	}
 	return fmt.Sprintf("%s-%s-%s-community-prefixes", neighborID, comm, ipFamily)
+}
+
+func asPathPrependPrefixListFor(neigID string, asPathPrepend []string, ipFamily string, prefixes ...string) AsPathPrependPrefixList {
+	return AsPathPrependPrefixList{
+		PrefixList: PrefixList{
+			Name:     asPathPrependPrefixListName(neigID, asPathPrepend, ipFamily),
+			Prefixes: sets.New(prefixes...),
+			IPFamily: ipFamily,
+		},
+		AsPathPrepend: asPathPrepend,
+	}
+}
+
+func asPathPrependPrefixListName(neighborID string, asPathPrepend []string, ipFamily string) string {
+	return fmt.Sprintf("%s-%s-%s-aspathprepend-prefixes", neighborID, strings.Join(asPathPrepend, ":"), ipFamily)
 }

@@ -138,6 +138,7 @@ func mergeAllowedOut(r, toMerge frr.AllowedOut) (frr.AllowedOut, error) {
 
 	res.CommunityPrefixesModifiers = mergeCommunityPrefixLists(r.CommunityPrefixesModifiers, toMerge.CommunityPrefixesModifiers)
 	res.LocalPrefPrefixesModifiers = mergeLocalPrefPrefixLists(r.LocalPrefPrefixesModifiers, toMerge.LocalPrefPrefixesModifiers)
+	res.AsPathPrependPrefixesModifiers = mergeAsPathPrependPrefixLists(r.AsPathPrependPrefixesModifiers, toMerge.AsPathPrependPrefixesModifiers)
 
 	return res, nil
 }
@@ -178,6 +179,25 @@ func mergeCommunityPrefixLists(curr, toMerge []frr.CommunityPrefixList) []frr.Co
 	}
 	for _, prefixList := range toMerge {
 		k := communityPrefixListKey(prefixList.Community, prefixList.IPFamily)
+		addTo, ok := allMap[k]
+		if !ok {
+			allMap[k] = prefixList
+			continue
+		}
+		addTo.Prefixes = addTo.Prefixes.Union(prefixList.Prefixes)
+		allMap[k] = addTo
+	}
+
+	return sortMap(allMap)
+}
+
+func mergeAsPathPrependPrefixLists(curr, toMerge []frr.AsPathPrependPrefixList) []frr.AsPathPrependPrefixList {
+	allMap := map[string]frr.AsPathPrependPrefixList{}
+	for _, prefixList := range curr {
+		allMap[asPathPrependPrefixListKey(prefixList.AsPathPrepend, prefixList.IPFamily)] = prefixList
+	}
+	for _, prefixList := range toMerge {
+		k := asPathPrependPrefixListKey(prefixList.AsPathPrepend, prefixList.IPFamily)
 		addTo, ok := allMap[k]
 		if !ok {
 			allMap[k] = prefixList

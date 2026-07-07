@@ -661,6 +661,34 @@ spec:
                                         format: ipv6
                                         type: string
                                     type: object
+                                  withAsPathPrepend:
+                                    description: |-
+                                      PrefixesWithAsPathPrepend defines a list of prefixes that will have their
+                                      BGP AS-Path prepended upon advertisement. Any prefix defined in this list
+                                      must also be present in the general list of prefixes allowed to be advertised.
+                                    items:
+                                      description: AsPathPrependPrefixes is a list
+                                        of prefixes associated with an AS path prepending.
+                                      properties:
+                                        asPathPrepend:
+                                          description: |-
+                                            AsPathPrepend dictates how many additional times the local AS number
+                                            is prepended to the AS-path on outgoing BGP updates. This is used to
+                                            artificially lengthen the AS-path so external peers route traffic to
+                                            other paths (e.g., creating active/standby routing).
+                                          maximum: 10
+                                          minimum: 1
+                                          type: integer
+                                        prefixes:
+                                          description: Prefixes is the list of prefixes
+                                            associated with the AS path prepending.
+                                          format: cidr
+                                          items:
+                                            type: string
+                                          minItems: 1
+                                          type: array
+                                      type: object
+                                    type: array
                                   withCommunity:
                                     description: |-
                                       PrefixesWithCommunity is a list of prefixes that are associated to a

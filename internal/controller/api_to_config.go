@@ -442,6 +442,11 @@ func prefixesWithCommunityToFRR(toAdd map[string]frr.CommunityPrefixList, neighb
 func prefixesWithAsPathPrependToFRR(toAdd map[string]frr.AsPathPrependPrefixList, neighbor *frr.NeighborConfig, toAdvertise v1beta1.Advertise, ipFamily ipfamily.Family, routerPrefixes sets.Set[string], routerASN uint32) (map[string]frr.AsPathPrependPrefixList, error) {
 	frrFamily := frrIPFamily(ipFamily)
 	for _, prefixes := range toAdvertise.PrefixesWithAsPathPrepend {
+		asnPrependCount := int(prefixes.AsPathPrepend)
+		if asnPrependCount == 0 {
+			return nil, fmt.Errorf("AsPathPrepend can't be zero")
+		}
+
 		var asnToRepeat string
 		if neighbor.LocalASN > 0 {
 			asnToRepeat = fmt.Sprintf("%d", neighbor.LocalASN)
@@ -449,13 +454,12 @@ func prefixesWithAsPathPrependToFRR(toAdd map[string]frr.AsPathPrependPrefixList
 			asnToRepeat = fmt.Sprintf("%d", routerASN)
 		}
 
-		count := int(prefixes.AsPathPrepend)
-		AsPathPrependASNs := make([]string, count)
-		for i := 0; i < count; i++ {
-			AsPathPrependASNs[i] = asnToRepeat
+		asPathPrependASNs := make([]string, asnPrependCount)
+		for i := 0; i < asnPrependCount; i++ {
+			asPathPrependASNs[i] = asnToRepeat
 		}
 
-		key := asPathPrependPrefixListKey(AsPathPrependASNs, frrFamily)
+		key := asPathPrependPrefixListKey(asPathPrependASNs, frrFamily)
 
 		if _, ok := toAdd[key]; ok {
 			return nil, fmt.Errorf("AS path prepending %d is already defined", prefixes.AsPathPrepend)
@@ -463,11 +467,11 @@ func prefixesWithAsPathPrependToFRR(toAdd map[string]frr.AsPathPrependPrefixList
 
 		asPathPrependPrefixList := frr.AsPathPrependPrefixList{
 			PrefixList: frr.PrefixList{
-				Name:     asPathPrependPrefixListName(neighbor.ID(), AsPathPrependASNs, frrFamily),
+				Name:     asPathPrependPrefixListName(neighbor.ID(), asPathPrependASNs, frrFamily),
 				IPFamily: frrFamily,
 				Prefixes: sets.New[string](),
 			},
-			AsPathPrepend: AsPathPrependASNs,
+			AsPathPrepend: asPathPrependASNs,
 		}
 
 		ipfamilyPrefixes := ipfamily.FilterPrefixes(prefixes.Prefixes, ipFamily)

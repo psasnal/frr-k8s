@@ -5,6 +5,7 @@ package controller
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	v1beta1 "github.com/metallb/frr-k8s/api/v1beta1"
 	"github.com/metallb/frr-k8s/internal/frr"
@@ -132,6 +133,23 @@ func mergeAllowedOut(r, toMerge frr.AllowedOut) (frr.AllowedOut, error) {
 		for _, prefix := range p.Prefixes.UnsortedList() {
 			if existing, ok := localPrefForPrefix[prefix]; ok && existing != p.LocalPref {
 				return frr.AllowedOut{}, fmt.Errorf("multiple local prefs (%d != %d) specified for prefix %s", existing, p.LocalPref, prefix)
+			}
+		}
+	}
+
+	asPathPrependForPrefix := map[string]string{}
+	for _, p := range r.AsPathPrependPrefixesModifiers {
+		// Convert []string to a single comma-separated string for comparison
+		prependStr := strings.Join(p.AsPathPrepend, ", ")
+		for _, prefix := range p.Prefixes.UnsortedList() {
+			asPathPrependForPrefix[prefix] = prependStr
+		}
+	}
+	for _, p := range toMerge.AsPathPrependPrefixesModifiers {
+		prependStr := strings.Join(p.AsPathPrepend, ", ")
+		for _, prefix := range p.Prefixes.UnsortedList() {
+			if existing, ok := asPathPrependForPrefix[prefix]; ok && existing != prependStr {
+				return frr.AllowedOut{}, fmt.Errorf("multiple as-path prepends ([%s] != [%s]) specified for prefix %s", existing, prependStr, prefix)
 			}
 		}
 	}

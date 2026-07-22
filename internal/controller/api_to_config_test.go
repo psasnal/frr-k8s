@@ -450,6 +450,45 @@ func TestConversion(t *testing.T) {
 			err: nil,
 		},
 		{
+			name: "Neighbor with prefixes with AS path prepending equal 0",
+			fromK8s: []v1beta1.FRRConfiguration{
+				{
+					Spec: v1beta1.FRRConfigurationSpec{
+						BGP: v1beta1.BGPConfig{
+							Routers: []v1beta1.Router{
+								{
+									ASN: 65040,
+									ID:  "192.0.2.20",
+									Neighbors: []v1beta1.Neighbor{
+										{
+											ASN:     65041,
+											Address: "192.0.2.21",
+											ToAdvertise: v1beta1.Advertise{
+												Allowed: v1beta1.AllowedOutPrefixes{
+													Prefixes: []string{"192.0.2.0/24"},
+													Mode:     v1beta1.AllowRestricted,
+												},
+												PrefixesWithAsPathPrepend: []v1beta1.AsPathPrependPrefixes{
+													{
+														Prefixes:      []string{"192.0.2.0/24"},
+														AsPathPrepend: 0,
+													},
+												},
+											},
+										},
+									},
+									Prefixes: []string{"192.0.2.0/24"},
+								},
+							},
+						},
+					},
+				},
+			},
+			secrets:  map[string]v1.Secret{},
+			expected: nil,
+			err:      fmt.Errorf("AsPathPrepend can't be zero"),
+		},
+		{
 			name: "Neighbor with LocalASN with prefixes with AS path prepending",
 			fromK8s: []v1beta1.FRRConfiguration{
 				{

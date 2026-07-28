@@ -438,7 +438,7 @@ func TestConversion(t *testing.T) {
 								Outgoing: frr.AllowedOut{
 									PrefixesV4: []string{"192.0.2.0/24"},
 									AsPathPrependPrefixesModifiers: []frr.AsPathPrependPrefixList{
-										asPathPrependPrefixListFor("192.0.2.21", []string{"65040", "65040", "65040"}, "ip", []string{"192.0.2.0/24"}),
+										asPathPrependPrefixListFor("192.0.2.21", "65040", 3, "ip", []string{"192.0.2.0/24"}),
 									},
 								},
 							},
@@ -540,7 +540,7 @@ func TestConversion(t *testing.T) {
 								Outgoing: frr.AllowedOut{
 									PrefixesV4: []string{"192.0.2.0/24"},
 									AsPathPrependPrefixesModifiers: []frr.AsPathPrependPrefixList{
-										asPathPrependPrefixListFor("192.0.2.21", []string{"64520", "64520", "64520"}, "ip", []string{"192.0.2.0/24"}),
+										asPathPrependPrefixListFor("192.0.2.21", "64520", 3, "ip", []string{"192.0.2.0/24"}),
 									},
 								},
 							},

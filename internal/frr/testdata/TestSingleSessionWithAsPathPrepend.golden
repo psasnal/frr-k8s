@@ -4,11 +4,11 @@ hostname dummyhostname
 ip nht resolve-via-default
 ipv6 nht resolve-via-default
 
-ip prefix-list 65001@192.168.1.2-65000:65000:65000-ip-aspathprepend-prefixes seq 1 permit 192.169.1.0/24
-ip prefix-list 65001@192.168.1.2-65000:65000:65000-ip-aspathprepend-prefixes seq 2 permit 192.170.1.0/22
+ip prefix-list 65001@192.168.1.2-65000-3-ip-aspathprepend-prefixes seq 1 permit 192.169.1.0/24
+ip prefix-list 65001@192.168.1.2-65000-3-ip-aspathprepend-prefixes seq 2 permit 192.170.1.0/22
 
 route-map 192.168.1.2-out permit 1
-  match ip address prefix-list 65001@192.168.1.2-65000:65000:65000-ip-aspathprepend-prefixes
+  match ip address prefix-list 65001@192.168.1.2-65000-3-ip-aspathprepend-prefixes
   set as-path prepend 65000 65000 65000
   on-match next
 

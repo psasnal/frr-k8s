@@ -351,10 +351,19 @@ type AsPathPrependPrefixes struct {
 	// +kubebuilder:validation:Format="cidr"
 	Prefixes []string `json:"prefixes,omitempty"`
 
-	// AsPathPrepend dictates how many additional times the local AS number
-	// is prepended to the AS-path on outgoing BGP updates. This is used to
-	// artificially lengthen the AS-path so external peers route traffic to
-	// other paths (e.g., creating active/standby routing).
+	// AsPathPrepend sets how many additional times the local ASN is added to
+	// the AS-path on outgoing BGP updates. This is used to artificially
+	// lengthen the AS-path so external peers route traffic to other paths
+	// (e.g., creating active/standby routing).
+	//
+	// For example, if your ASN is 65000 and you set this to 3, the
+	// controller configures FRR to 'set as-path prepend 65000 65000 65000'.
+	// If a specific LocalASN is configured for the neighbor, that LocalASN
+	// is used instead to ensure BGP masquerading remains intact.
+	//
+	// We intentionally restrict this to repeating the local ASN. This approach
+	// provides the benefits of a longer AS-path while protecting users from
+	// accidentally triggering upstream loop-prevention drops.
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=10
 	AsPathPrepend uint8 `json:"asPathPrepend,omitempty"`

@@ -245,7 +245,7 @@ func TestSingleSessionWithAsPathPrepend(t *testing.T) {
 								"192.170.1.0/22",
 							},
 							AsPathPrependPrefixesModifiers: []AsPathPrependPrefixList{
-								asPathPrependPrefixListFor("65001@192.168.1.2", []string{"65000", "65000", "65000"}, "ip", "192.169.1.0/24", "192.170.1.0/22"),
+								asPathPrependPrefixListFor("65001@192.168.1.2", "65000", 3, "ip", "192.169.1.0/24", "192.170.1.0/22"),
 							},
 						},
 					},
@@ -1469,17 +1469,18 @@ func communityPrefixListName(neighborID string, comm community.BGPCommunity, ipF
 	return fmt.Sprintf("%s-%s-%s-community-prefixes", neighborID, comm, ipFamily)
 }
 
-func asPathPrependPrefixListFor(neigID string, asPathPrepend []string, ipFamily string, prefixes ...string) AsPathPrependPrefixList {
+func asPathPrependPrefixListFor(neigID string, asnToPrepend string, prependCount uint8, ipFamily string, prefixes ...string) AsPathPrependPrefixList {
 	return AsPathPrependPrefixList{
 		PrefixList: PrefixList{
-			Name:     asPathPrependPrefixListName(neigID, asPathPrepend, ipFamily),
+			Name:     asPathPrependPrefixListName(neigID, asnToPrepend, prependCount, ipFamily),
 			Prefixes: sets.New(prefixes...),
 			IPFamily: ipFamily,
 		},
-		AsPathPrepend: asPathPrepend,
+		PrependASN:   asnToPrepend,
+		PrependCount: prependCount,
 	}
 }
 
-func asPathPrependPrefixListName(neighborID string, asPathPrepend []string, ipFamily string) string {
-	return fmt.Sprintf("%s-%s-%s-aspathprepend-prefixes", neighborID, strings.Join(asPathPrepend, ":"), ipFamily)
+func asPathPrependPrefixListName(neighborID string, asnToPrepend string, prependCount uint8, ipFamily string) string {
+	return fmt.Sprintf("%s-%s-%d-%s-aspathprepend-prefixes", neighborID, asnToPrepend, prependCount, ipFamily)
 }

@@ -117,7 +117,7 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `prefixes` _string array_ | Prefixes is the list of prefixes associated with the AS path prepending. |  | Format: cidr <br />MinItems: 1 <br /> |
-| `asPathPrepend` _integer_ | AsPathPrepend dictates how many additional times the local AS number<br />is prepended to the AS-path on outgoing BGP updates. This is used to<br />artificially lengthen the AS-path so external peers route traffic to<br />other paths (e.g., creating active/standby routing). |  | Maximum: 10 <br />Minimum: 1 <br /> |
+| `asPathPrepend` _integer_ | AsPathPrepend sets how many additional times the local ASN is added to<br />the AS-path on outgoing BGP updates. This is used to artificially<br />lengthen the AS-path so external peers route traffic to other paths<br />(e.g., creating active/standby routing).<br />For example, if your ASN is 65000 and you set this to 3, the<br />controller configures FRR to 'set as-path prepend 65000 65000 65000'.<br />If a specific LocalASN is configured for the neighbor, that LocalASN<br />is used instead to ensure BGP masquerading remains intact.<br />We intentionally restrict this to repeating the local ASN. This approach<br />provides the benefits of a longer AS-path while protecting users from<br />accidentally triggering upstream loop-prevention drops. |  | Maximum: 10 <br />Minimum: 1 <br /> |
 
 
 #### BFDProfile

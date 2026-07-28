@@ -187,11 +187,16 @@ func (pl LocalPrefPrefixList) SetStatement() string {
 
 type AsPathPrependPrefixList struct {
 	PrefixList
-	AsPathPrepend []string
+	PrependASN   string
+	PrependCount uint8
 }
 
 func (pl AsPathPrependPrefixList) SetStatement() string {
-	return fmt.Sprintf("set as-path prepend %s", strings.Join(pl.AsPathPrepend, " "))
+	parts := make([]string, pl.PrependCount)
+	for i := range parts {
+		parts[i] = pl.PrependASN
+	}
+	return fmt.Sprintf("set as-path prepend %s", strings.Join(parts, " "))
 }
 
 type PropertyPrefixList interface {

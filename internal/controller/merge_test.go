@@ -48,7 +48,8 @@ func TestMergeRouters(t *testing.T) {
 							},
 							LocalPrefPrefixesModifiers: []frr.LocalPrefPrefixList{},
 							AsPathPrependPrefixesModifiers: []frr.AsPathPrependPrefixList{
-								asPathPrependPrefixListFor("65040@192.0.1.20", []string{"65001"}, "ip", []string{"192.0.2.0/24"}),
+								asPathPrependPrefixListFor("65040@192.0.1.20", "65001", 1, "ip", []string{"192.0.2.0/24"}),
+								asPathPrependPrefixListFor("65040@192.0.1.20", "65001", 1, "ipv6", []string{"2001:db8::/64"}),
 							},
 						},
 						Incoming: frr.AllowedIn{
@@ -149,7 +150,8 @@ func TestMergeRouters(t *testing.T) {
 								localPrefPrefixListFor("65040@192.0.1.20", 200, "ipv6", []string{"2001:db8::/64"}),
 							},
 							AsPathPrependPrefixesModifiers: []frr.AsPathPrependPrefixList{
-								asPathPrependPrefixListFor("65040@192.0.1.20", []string{"65001"}, "ip", []string{"192.0.4.0/24"}),
+								asPathPrependPrefixListFor("65040@192.0.1.20", "65001", 1, "ip", []string{"192.0.4.0/24"}),
+								asPathPrependPrefixListFor("65040@192.0.1.20", "65001", 1, "ipv6", []string{"2001:db8::/64"}),
 							},
 						},
 						Incoming: frr.AllowedIn{
@@ -259,7 +261,8 @@ func TestMergeRouters(t *testing.T) {
 								localPrefPrefixListFor("65040@192.0.1.20", 200, "ipv6", []string{"2001:db8::/64"}),
 							},
 							AsPathPrependPrefixesModifiers: []frr.AsPathPrependPrefixList{
-								asPathPrependPrefixListFor("65040@192.0.1.20", []string{"65001"}, "ip", []string{"192.0.2.0/24", "192.0.4.0/24"}),
+								asPathPrependPrefixListFor("65040@192.0.1.20", "65001", 1, "ip", []string{"192.0.2.0/24", "192.0.4.0/24"}),
+								asPathPrependPrefixListFor("65040@192.0.1.20", "65001", 1, "ipv6", []string{"2001:db8::/64"}),
 							},
 						},
 						Incoming: frr.AllowedIn{
@@ -467,7 +470,7 @@ func TestMergeNeighbors(t *testing.T) {
 						},
 						LocalPrefPrefixesModifiers: []frr.LocalPrefPrefixList{},
 						AsPathPrependPrefixesModifiers: []frr.AsPathPrependPrefixList{
-							asPathPrependPrefixListFor("65040@192.0.1.20", []string{"65000"}, "ip", []string{"192.0.2.0/24"}),
+							asPathPrependPrefixListFor("65040@192.0.1.20", "65000", 1, "ip", []string{"192.0.2.0/24"}),
 						},
 					},
 					Incoming: frr.AllowedIn{
@@ -503,7 +506,7 @@ func TestMergeNeighbors(t *testing.T) {
 							localPrefPrefixListFor("65040@192.0.1.23", 200, "ipv6", []string{"2001:db8::/64"}),
 						},
 						AsPathPrependPrefixesModifiers: []frr.AsPathPrependPrefixList{
-							asPathPrependPrefixListFor("65040@192.0.1.20", []string{"65000", "65000"}, "ip", []string{"192.0.4.0/24"}),
+							asPathPrependPrefixListFor("65040@192.0.1.20", "65000", 2, "ip", []string{"192.0.4.0/24"}),
 						},
 					},
 					Incoming: frr.AllowedIn{
@@ -543,8 +546,8 @@ func TestMergeNeighbors(t *testing.T) {
 							localPrefPrefixListFor("65040@192.0.1.23", 200, "ipv6", []string{"2001:db8::/64"}),
 						},
 						AsPathPrependPrefixesModifiers: []frr.AsPathPrependPrefixList{
-							asPathPrependPrefixListFor("65040@192.0.1.20", []string{"65000"}, "ip", []string{"192.0.2.0/24"}),
-							asPathPrependPrefixListFor("65040@192.0.1.20", []string{"65000", "65000"}, "ip", []string{"192.0.4.0/24"}),
+							asPathPrependPrefixListFor("65040@192.0.1.20", "65000", 1, "ip", []string{"192.0.2.0/24"}),
+							asPathPrependPrefixListFor("65040@192.0.1.20", "65000", 2, "ip", []string{"192.0.4.0/24"}),
 						},
 					},
 					Incoming: frr.AllowedIn{
@@ -1511,7 +1514,7 @@ func TestMergeNeighbors(t *testing.T) {
 					Outgoing: frr.AllowedOut{
 						PrefixesV4: []string{"192.0.2.0/24", "192.0.3.0/24"},
 						AsPathPrependPrefixesModifiers: []frr.AsPathPrependPrefixList{
-							asPathPrependPrefixListFor("65040@192.0.1.20", []string{"65000"}, "ip", []string{"192.0.2.0/24"}),
+							asPathPrependPrefixListFor("65040@192.0.1.20", "65000", 1, "ip", []string{"192.0.2.0/24"}),
 						},
 					},
 				},
@@ -1525,7 +1528,7 @@ func TestMergeNeighbors(t *testing.T) {
 					Outgoing: frr.AllowedOut{
 						PrefixesV4: []string{"192.0.4.0/24"},
 						AsPathPrependPrefixesModifiers: []frr.AsPathPrependPrefixList{
-							asPathPrependPrefixListFor("65040@192.0.1.20", []string{"65000"}, "ip", []string{"192.0.4.0/24"}),
+							asPathPrependPrefixListFor("65040@192.0.1.20", "65000", 1, "ip", []string{"192.0.4.0/24"}),
 						},
 					},
 				},
@@ -1539,7 +1542,7 @@ func TestMergeNeighbors(t *testing.T) {
 					Outgoing: frr.AllowedOut{
 						PrefixesV4: []string{"192.0.2.0/24", "192.0.3.0/24", "192.0.4.0/24"},
 						AsPathPrependPrefixesModifiers: []frr.AsPathPrependPrefixList{
-							asPathPrependPrefixListFor("65040@192.0.1.20", []string{"65000"}, "ip", []string{"192.0.2.0/24", "192.0.4.0/24"}),
+							asPathPrependPrefixListFor("65040@192.0.1.20", "65000", 1, "ip", []string{"192.0.2.0/24", "192.0.4.0/24"}),
 						},
 					},
 				},
@@ -1557,7 +1560,7 @@ func TestMergeNeighbors(t *testing.T) {
 					Outgoing: frr.AllowedOut{
 						PrefixesV4: []string{"192.0.2.0/24", "192.0.3.0/24"},
 						AsPathPrependPrefixesModifiers: []frr.AsPathPrependPrefixList{
-							asPathPrependPrefixListFor("65040@192.0.1.20", []string{"65000"}, "ip", []string{"192.0.2.0/24"}),
+							asPathPrependPrefixListFor("65040@192.0.1.20", "65000", 1, "ip", []string{"192.0.2.0/24"}),
 						},
 					},
 				},
@@ -1571,7 +1574,7 @@ func TestMergeNeighbors(t *testing.T) {
 					Outgoing: frr.AllowedOut{
 						PrefixesV4: []string{"192.0.4.0/24"},
 						AsPathPrependPrefixesModifiers: []frr.AsPathPrependPrefixList{
-							asPathPrependPrefixListFor("65040@192.0.1.20", []string{"65000", "65000"}, "ip", []string{"192.0.4.0/24"}),
+							asPathPrependPrefixListFor("65040@192.0.1.20", "65000", 2, "ip", []string{"192.0.4.0/24"}),
 						},
 					},
 				},
@@ -1585,8 +1588,8 @@ func TestMergeNeighbors(t *testing.T) {
 					Outgoing: frr.AllowedOut{
 						PrefixesV4: []string{"192.0.2.0/24", "192.0.3.0/24", "192.0.4.0/24"},
 						AsPathPrependPrefixesModifiers: []frr.AsPathPrependPrefixList{
-							asPathPrependPrefixListFor("65040@192.0.1.20", []string{"65000"}, "ip", []string{"192.0.2.0/24"}),
-							asPathPrependPrefixListFor("65040@192.0.1.20", []string{"65000", "65000"}, "ip", []string{"192.0.4.0/24"}),
+							asPathPrependPrefixListFor("65040@192.0.1.20", "65000", 1, "ip", []string{"192.0.2.0/24"}),
+							asPathPrependPrefixListFor("65040@192.0.1.20", "65000", 2, "ip", []string{"192.0.4.0/24"}),
 						},
 					},
 				},
@@ -1604,7 +1607,7 @@ func TestMergeNeighbors(t *testing.T) {
 					Outgoing: frr.AllowedOut{
 						PrefixesV4: []string{"192.0.2.0/24", "192.0.3.0/24"},
 						AsPathPrependPrefixesModifiers: []frr.AsPathPrependPrefixList{
-							asPathPrependPrefixListFor("65040@192.0.1.20", []string{"65000"}, "ip", []string{"192.0.2.0/24"}),
+							asPathPrependPrefixListFor("65040@192.0.1.20", "65000", 1, "ip", []string{"192.0.2.0/24"}),
 						},
 					},
 				},
@@ -1618,7 +1621,7 @@ func TestMergeNeighbors(t *testing.T) {
 					Outgoing: frr.AllowedOut{
 						PrefixesV4: []string{"192.0.2.0/24"},
 						AsPathPrependPrefixesModifiers: []frr.AsPathPrependPrefixList{
-							asPathPrependPrefixListFor("65040@192.0.1.20", []string{"65000"}, "ip", []string{"192.0.2.0/24"}),
+							asPathPrependPrefixListFor("65040@192.0.1.20", "65000", 1, "ip", []string{"192.0.2.0/24"}),
 						},
 					},
 				},
@@ -1632,7 +1635,7 @@ func TestMergeNeighbors(t *testing.T) {
 					Outgoing: frr.AllowedOut{
 						PrefixesV4: []string{"192.0.2.0/24", "192.0.3.0/24"},
 						AsPathPrependPrefixesModifiers: []frr.AsPathPrependPrefixList{
-							asPathPrependPrefixListFor("65040@192.0.1.20", []string{"65000"}, "ip", []string{"192.0.2.0/24"}),
+							asPathPrependPrefixListFor("65040@192.0.1.20", "65000", 1, "ip", []string{"192.0.2.0/24"}),
 						},
 					},
 				},
@@ -1650,7 +1653,7 @@ func TestMergeNeighbors(t *testing.T) {
 					Outgoing: frr.AllowedOut{
 						PrefixesV4: []string{"192.0.2.0/24", "192.0.3.0/24"},
 						AsPathPrependPrefixesModifiers: []frr.AsPathPrependPrefixList{
-							asPathPrependPrefixListFor("65040@192.0.1.20", []string{"65000"}, "ip", []string{"192.0.2.0/24"}),
+							asPathPrependPrefixListFor("65040@192.0.1.20", "65000", 1, "ip", []string{"192.0.2.0/24"}),
 						},
 					},
 				},
@@ -1664,13 +1667,13 @@ func TestMergeNeighbors(t *testing.T) {
 					Outgoing: frr.AllowedOut{
 						PrefixesV4: []string{"192.0.2.0/24"},
 						AsPathPrependPrefixesModifiers: []frr.AsPathPrependPrefixList{
-							asPathPrependPrefixListFor("65040@192.0.1.20", []string{"65000", "65000"}, "ip", []string{"192.0.2.0/24"}),
+							asPathPrependPrefixListFor("65040@192.0.1.20", "65000", 2, "ip", []string{"192.0.2.0/24"}),
 						},
 					},
 				},
 			},
 			expected: nil,
-			err:      fmt.Errorf("could not merge outgoing for neighbor 192.0.1.20 vrf , err: multiple as-path prepends (%s != %s) specified for prefix %s", []string{"65000"}, []string{"65000, 65000"}, "192.0.2.0/24"),
+			err:      fmt.Errorf("could not merge outgoing for neighbor 192.0.1.20 vrf , err: multiple as-path prepends (%s != %s) specified for prefix %s", "65000 x 1", "65000 x 2", "192.0.2.0/24"),
 		},
 	}
 
@@ -1965,14 +1968,15 @@ func localPrefPrefixListFor(neigID string, localPref int, ipFamily string, prefi
 	}
 }
 
-func asPathPrependPrefixListFor(neigID string, asPathPrepend []string, ipFamily string, prefixes []string) frr.AsPathPrependPrefixList {
+func asPathPrependPrefixListFor(neigID string, asnToPrepend string, prependCount uint8, ipFamily string, prefixes []string) frr.AsPathPrependPrefixList {
 	return frr.AsPathPrependPrefixList{
 		PrefixList: frr.PrefixList{
-			Name:     asPathPrependPrefixListName(neigID, asPathPrepend, ipFamily),
+			Name:     asPathPrependPrefixListName(neigID, asnToPrepend, prependCount, ipFamily),
 			Prefixes: sets.New(prefixes...),
 			IPFamily: ipFamily,
 		},
-		AsPathPrepend: asPathPrepend,
+		PrependASN:   asnToPrepend,
+		PrependCount: prependCount,
 	}
 }
 
@@ -2006,6 +2010,6 @@ func asPathPrependPrefixListSorter(a, b frr.AsPathPrependPrefixList) bool {
 		panic("empty name")
 	}
 
-	return asPathPrependPrefixListKey(a.AsPathPrepend, a.IPFamily) <
-		asPathPrependPrefixListKey(b.AsPathPrepend, b.IPFamily)
+	return asPathPrependPrefixListKey(a.PrependASN, a.PrependCount, a.IPFamily) <
+		asPathPrependPrefixListKey(b.PrependASN, b.PrependCount, b.IPFamily)
 }

@@ -5,6 +5,7 @@ package tests
 import (
 	"github.com/onsi/ginkgo/v2"
 	"go.universe.tf/e2etest/pkg/frr/container"
+	"strings"
 
 	frrk8sv1beta1 "github.com/metallb/frr-k8s/api/v1beta1"
 	"github.com/metallb/frrk8stests/pkg/config"
@@ -467,6 +468,80 @@ var _ = ginkgo.Describe("Advertisement", func() {
 					}
 				},
 				splitCfg: splitByLocalPref,
+			}),
+			ginkgo.Entry("IPV4 - Advertise with asPathPrepend, AllowedMode all", params{
+				ipFamily: ipfamily.IPv4,
+				vrf:      "",
+				myAsn:    infra.FRRK8sASN,
+				prefixes: []string{"192.168.0.0/24", "192.168.1.0/24", "192.168.2.0/24"},
+				modifyPeers: func(ppV4 []config.Peer, ppV6 []config.Peer) {
+					for i := range ppV4 {
+						// Only apply AsPathPrepend to eBGP neighbors to avoid loop-prevention drops on iBGP
+						if strings.Contains(ppV4[i].FRR.Name, "ebgp") {
+							ppV4[i].Neigh.ToAdvertise.Allowed.Mode = frrk8sv1beta1.AllowAll
+							ppV4[i].Neigh.ToAdvertise.PrefixesWithAsPathPrepend = []frrk8sv1beta1.AsPathPrependPrefixes{
+								{
+									AsPathPrepend: 3,
+									Prefixes:      []string{"192.168.0.0/24"},
+								},
+								{
+									AsPathPrepend: 2,
+									Prefixes:      []string{"192.168.1.0/24"},
+								},
+							}
+						}
+					}
+				},
+				validate: func(ppV4 []config.Peer, ppV6 []config.Peer, nodes []v1.Node) {
+					for _, p := range ppV4 {
+						// Only validate eBGP neighbors
+						if strings.Contains(p.FRR.Name, "ebgp") {
+							ValidatePrefixesForNeighbor(p.FRR, nodes, "192.168.0.0/24", "192.168.1.0/24")
+							ValidateNeighborAsPathPrependForPrefix(p.FRR, "192.168.0.0", 3, ipfamily.IPv4)
+							ValidateNeighborAsPathPrependForPrefix(p.FRR, "192.168.1.0", 2, ipfamily.IPv4)
+							ValidateNeighborAsPathPrependForPrefix(p.FRR, "192.168.2.0", 0, ipfamily.IPv4) // no AsPathPrepend for prefix 192.168.2.0
+						}
+					}
+				},
+				splitCfg: splitByAsPathPrepend,
+			}),
+			ginkgo.Entry("IPV4 - Advertise with asPathPrepend, AllowedMode restricted", params{
+				ipFamily: ipfamily.IPv4,
+				vrf:      "",
+				myAsn:    infra.FRRK8sASN,
+				prefixes: []string{"192.168.0.0/24", "192.168.1.0/24", "192.168.2.0/24", "192.168.3.0/24"},
+				modifyPeers: func(ppV4 []config.Peer, ppV6 []config.Peer) {
+					for i := range ppV4 {
+						// Only apply AsPathPrepend to eBGP neighbors to avoid loop-prevention drops on iBGP
+						if strings.Contains(ppV4[i].FRR.Name, "ebgp") {
+							ppV4[i].Neigh.ToAdvertise.Allowed.Mode = frrk8sv1beta1.AllowRestricted
+							ppV4[i].Neigh.ToAdvertise.Allowed.Prefixes = []string{"192.168.0.0/24", "192.168.1.0/24", "192.168.2.0/24", "192.168.3.0/24"}
+							ppV4[i].Neigh.ToAdvertise.PrefixesWithAsPathPrepend = []frrk8sv1beta1.AsPathPrependPrefixes{
+								{
+									AsPathPrepend: 3,
+									Prefixes:      []string{"192.168.0.0/24"},
+								},
+								{
+									AsPathPrepend: 2,
+									Prefixes:      []string{"192.168.1.0/24", "192.168.2.0/24"},
+								},
+							}
+						}
+					}
+				},
+				validate: func(ppV4 []config.Peer, ppV6 []config.Peer, nodes []v1.Node) {
+					for _, p := range ppV4 {
+						// Only validate eBGP neighbors
+						if strings.Contains(p.FRR.Name, "ebgp") {
+							ValidatePrefixesForNeighbor(p.FRR, nodes, "192.168.0.0/24", "192.168.1.0/24", "192.168.2.0/24", "192.168.3.0/24")
+							ValidateNeighborAsPathPrependForPrefix(p.FRR, "192.168.0.0", 3, ipfamily.IPv4)
+							ValidateNeighborAsPathPrependForPrefix(p.FRR, "192.168.1.0", 2, ipfamily.IPv4)
+							ValidateNeighborAsPathPrependForPrefix(p.FRR, "192.168.2.0", 2, ipfamily.IPv4)
+							ValidateNeighborAsPathPrependForPrefix(p.FRR, "192.168.3.0", 0, ipfamily.IPv4) // no AsPathPrepend for prefix 192.168.3.0
+						}
+					}
+				},
+				splitCfg: splitByAsPathPrepend,
 			}),
 			ginkgo.Entry("IPV4 - Advertise with communities and localPref, AllowedMode all", params{
 				ipFamily: ipfamily.IPv4,

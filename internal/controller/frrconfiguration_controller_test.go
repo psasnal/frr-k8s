@@ -567,10 +567,11 @@ var _ = Describe("Frrk8s controller", func() {
 								Addr:     "192.0.2.7",
 								Password: "password2",
 								Outgoing: frr.AllowedOut{
-									PrefixesV4:                 []string{},
-									PrefixesV6:                 []string{},
-									LocalPrefPrefixesModifiers: []frr.LocalPrefPrefixList{},
-									CommunityPrefixesModifiers: []frr.CommunityPrefixList{},
+									PrefixesV4:                     []string{},
+									PrefixesV6:                     []string{},
+									LocalPrefPrefixesModifiers:     []frr.LocalPrefPrefixList{},
+									CommunityPrefixesModifiers:     []frr.CommunityPrefixList{},
+									AsPathPrependPrefixesModifiers: []frr.AsPathPrependPrefixList{},
 								},
 								Incoming: frr.AllowedIn{
 									PrefixesV4: []frr.IncomingFilter{},
@@ -608,10 +609,11 @@ var _ = Describe("Frrk8s controller", func() {
 								Addr:     "192.0.2.7",
 								Password: "password3",
 								Outgoing: frr.AllowedOut{
-									PrefixesV4:                 []string{},
-									PrefixesV6:                 []string{},
-									LocalPrefPrefixesModifiers: []frr.LocalPrefPrefixList{},
-									CommunityPrefixesModifiers: []frr.CommunityPrefixList{},
+									PrefixesV4:                     []string{},
+									PrefixesV6:                     []string{},
+									LocalPrefPrefixesModifiers:     []frr.LocalPrefPrefixList{},
+									CommunityPrefixesModifiers:     []frr.CommunityPrefixList{},
+									AsPathPrependPrefixesModifiers: []frr.AsPathPrependPrefixList{},
 								},
 								Incoming: frr.AllowedIn{
 									PrefixesV4: []frr.IncomingFilter{},
@@ -903,10 +905,11 @@ var _ = Describe("Frrk8s controller", func() {
 									Addr:            "192.0.2.10",
 									AddressFamilies: []string{"evpn", "unicast"},
 									Outgoing: frr.AllowedOut{
-										PrefixesV4:                 []string{},
-										PrefixesV6:                 []string{},
-										LocalPrefPrefixesModifiers: []frr.LocalPrefPrefixList{},
-										CommunityPrefixesModifiers: []frr.CommunityPrefixList{},
+										PrefixesV4:                     []string{},
+										PrefixesV6:                     []string{},
+										LocalPrefPrefixesModifiers:     []frr.LocalPrefPrefixList{},
+										CommunityPrefixesModifiers:     []frr.CommunityPrefixList{},
+										AsPathPrependPrefixesModifiers: []frr.AsPathPrependPrefixList{},
 									},
 									Incoming: frr.AllowedIn{
 										PrefixesV4: []frr.IncomingFilter{},

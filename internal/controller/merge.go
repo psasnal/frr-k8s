@@ -141,8 +141,26 @@ func mergeAllowedOut(r, toMerge frr.AllowedOut) (frr.AllowedOut, error) {
 		}
 	}
 
+	asPathPrependForPrefix := map[string]string{}
+	for _, p := range r.AsPathPrependPrefixesModifiers {
+		// Convert to a single string for comparison (format '<PrependASN> x <PrependCount>')
+		prependStr := fmt.Sprintf("%s x %d", p.PrependASN, p.PrependCount)
+		for _, prefix := range p.Prefixes.UnsortedList() {
+			asPathPrependForPrefix[prefix] = prependStr
+		}
+	}
+	for _, p := range toMerge.AsPathPrependPrefixesModifiers {
+		prependStr := fmt.Sprintf("%s x %d", p.PrependASN, p.PrependCount)
+		for _, prefix := range p.Prefixes.UnsortedList() {
+			if existing, ok := asPathPrependForPrefix[prefix]; ok && existing != prependStr {
+				return frr.AllowedOut{}, fmt.Errorf("multiple as-path prepends (%s != %s) specified for prefix %s", existing, prependStr, prefix)
+			}
+		}
+	}
+
 	res.CommunityPrefixesModifiers = mergeCommunityPrefixLists(r.CommunityPrefixesModifiers, toMerge.CommunityPrefixesModifiers)
 	res.LocalPrefPrefixesModifiers = mergeLocalPrefPrefixLists(r.LocalPrefPrefixesModifiers, toMerge.LocalPrefPrefixesModifiers)
+	res.AsPathPrependPrefixesModifiers = mergeAsPathPrependPrefixLists(r.AsPathPrependPrefixesModifiers, toMerge.AsPathPrependPrefixesModifiers)
 
 	return res, nil
 }
@@ -222,6 +240,25 @@ func mergeCommunityPrefixLists(curr, toMerge []frr.CommunityPrefixList) []frr.Co
 	}
 	for _, prefixList := range toMerge {
 		k := communityPrefixListKey(prefixList.Community, prefixList.IPFamily)
+		addTo, ok := allMap[k]
+		if !ok {
+			allMap[k] = prefixList
+			continue
+		}
+		addTo.Prefixes = addTo.Prefixes.Union(prefixList.Prefixes)
+		allMap[k] = addTo
+	}
+
+	return sortMap(allMap)
+}
+
+func mergeAsPathPrependPrefixLists(curr, toMerge []frr.AsPathPrependPrefixList) []frr.AsPathPrependPrefixList {
+	allMap := map[string]frr.AsPathPrependPrefixList{}
+	for _, prefixList := range curr {
+		allMap[asPathPrependPrefixListKey(prefixList.PrependASN, prefixList.PrependCount, prefixList.IPFamily)] = prefixList
+	}
+	for _, prefixList := range toMerge {
+		k := asPathPrependPrefixListKey(prefixList.PrependASN, prefixList.PrependCount, prefixList.IPFamily)
 		addTo, ok := allMap[k]
 		if !ok {
 			allMap[k] = prefixList

@@ -3,6 +3,7 @@
 package tests
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -173,6 +174,69 @@ func ValidateNeighborLocalPrefForPrefix(neigh frrcontainer.FRR, prefix string, e
 
 		return nil
 	}, 5*time.Second, time.Second).ShouldNot(HaveOccurred())
+}
+
+func ValidateNeighborAsPathPrependForPrefix(neigh frrcontainer.FRR, prefix string, expectedAsPathPrepend uint8, ipfam ipfamily.Family) {
+	if !strings.Contains(neigh.Name, "ebgp") {
+		return // asPathPrepend is valid only for eBGP connections
+	}
+
+	ginkgo.By(fmt.Sprintf("Checking asPathPrepend for prefix %s on neighbor %s", prefix, neigh.Name))
+	Eventually(func() error {
+		asPathPrepend, err := AsPathPrependForPrefix(neigh, prefix, ipfam)
+		if err != nil {
+			return err
+		}
+
+		if asPathPrepend != expectedAsPathPrepend {
+			return fmt.Errorf("asPathPrepend %d for prefix %s on neighbor %s does not equal %d", asPathPrepend, prefix, neigh.Name, expectedAsPathPrepend)
+		}
+
+		return nil
+	}, 5*time.Second, time.Second).ShouldNot(HaveOccurred())
+}
+
+// TODO(metallb/metallb#3120): Extend MetalLB's FRR.Route struct to natively parse and store AS-Path prepend data.
+func AsPathPrependForPrefix(neigh frrcontainer.FRR, prefix string, ipfam ipfamily.Family) (uint8, error) {
+	// 1. Run the command inside the external FRR container
+	cmd := fmt.Sprintf("vtysh -c 'show bgp %s unicast %s json'", ipfam, prefix)
+	out, err := neigh.Executor.Exec("sh", "-c", cmd)
+	if err != nil {
+		return 0, fmt.Errorf("failed to execute vtysh: %w", err)
+	}
+
+	// 2. Define a minimal struct to parse just the AS Path from FRR's JSON output
+	var routeData struct {
+		Paths []struct {
+			AsPath struct {
+				String string `json:"string"`
+			} `json:"aspath"`
+		} `json:"paths"`
+	}
+
+	// 3. Unmarshal the JSON
+	if err := json.Unmarshal([]byte(out), &routeData); err != nil {
+		return 0, fmt.Errorf("failed to parse FRR JSON: %w", err)
+	}
+
+	if len(routeData.Paths) == 0 {
+		return 0, fmt.Errorf("no paths found for prefix %s", prefix)
+	}
+
+	// 4. Extract the AS Path string (e.g., "65000 65000 65000 65000")
+	asPathStr := routeData.Paths[0].AsPath.String
+
+	if strings.TrimSpace(asPathStr) == "" {
+		return 0, nil // No ASNs in the path
+	}
+
+	// 5. Count the ASNs.
+	// If the base ASN is added once natively, and we prepend 3 times, there are 4 ASNs total.
+	// So prependCount = Total ASNs - 1
+	asnList := strings.Fields(asPathStr)
+	prependCount := len(asnList) - 1
+
+	return uint8(prependCount), nil
 }
 
 func checkBFDConfigPropagated(nodeConfig frrk8sv1beta1.BFDProfile, peerConfig frr.BFDPeer) error {

@@ -134,8 +134,8 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `prefixes` _string array_ | Prefixes is the list of prefixes associated with the AS path prepending. |  | Format: cidr <br />MinItems: 1 <br /> |
-| `asPathPrepend` _integer_ | AsPathPrepend is the number of times to prepend the local ASN to the AS path for the prefixes. |  | Maximum: 10 <br />Minimum: 1 <br /> |
+| `prefixes` _string array_ | Prefixes is the list of prefixes associated with the AS path prepending. |  | MinItems: 1 <br />items:Format: cidr <br />Required: \{\} <br /> |
+| `asPathPrepend` _integer_ | AsPathPrepend is the number of times to prepend the local ASN to the AS path for the prefixes. |  | Maximum: 10 <br />Minimum: 1 <br />Required: \{\} <br /> |
 
 
 #### BFDProfile

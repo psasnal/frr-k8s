@@ -1673,7 +1673,7 @@ func TestMergeNeighbors(t *testing.T) {
 				},
 			},
 			expected: nil,
-			err:      fmt.Errorf("could not merge outgoing for neighbor 192.0.1.20 vrf , err: multiple as-path prepends (%s != %s) specified for prefix %s", "65000 x 1", "65000 x 2", "192.0.2.0/24"),
+			err:      fmt.Errorf("could not merge outgoing for neighbor 192.0.1.20 vrf , err: multiple as-path prepends (%s != %s) specified for prefix %s", "65000-1-ip", "65000-2-ip", "192.0.2.0/24"),
 		},
 		{
 			name: "AllowAsIn: empty merges with numeric",
@@ -2084,7 +2084,7 @@ func TestMergeEVPNConfigs(t *testing.T) {
 					{VNI: 100, VNIProperties: frr.VNIProperties{RD: "65001:100"}},
 				},
 			},
-			err: fmt.Errorf("conflicting RD"),
+			err: fmt.Errorf("could not merge l2vni 100, err: different RD values (65000:100 != 65001:100)"),
 		},
 		{
 			name: "Merge L2VNIs - same VNI, mixing implicit and explicit import RTs",
@@ -2160,9 +2160,6 @@ func TestMergeEVPNConfigs(t *testing.T) {
 			if test.err != nil && err == nil {
 				t.Fatalf("expected error, got nil")
 			}
-			if test.err != nil && err != nil {
-				return
-			}
 			if test.err == nil && err != nil {
 				t.Fatalf("expected no error, got %v", err)
 			}
@@ -2226,8 +2223,10 @@ func communityPrefixListSorter(a, b frr.CommunityPrefixList) bool {
 		panic("empty name")
 	}
 
-	return communityPrefixListKey(a.Community, a.IPFamily) <
-		communityPrefixListKey(b.Community, b.IPFamily)
+	if communityPrefixListKey(a.Community, a.IPFamily) < communityPrefixListKey(b.Community, b.IPFamily) {
+		return false
+	}
+	return true
 }
 
 func localPrefPrefixListSorter(a, b frr.LocalPrefPrefixList) bool {
@@ -2235,8 +2234,10 @@ func localPrefPrefixListSorter(a, b frr.LocalPrefPrefixList) bool {
 		panic("empty name")
 	}
 
-	return localPrefPrefixListKey(a.LocalPref, a.IPFamily) <
-		localPrefPrefixListKey(b.LocalPref, b.IPFamily)
+	if localPrefPrefixListKey(a.LocalPref, a.IPFamily) < localPrefPrefixListKey(b.LocalPref, b.IPFamily) {
+		return false
+	}
+	return true
 }
 
 func asPathPrependPrefixListSorter(a, b frr.AsPathPrependPrefixList) bool {

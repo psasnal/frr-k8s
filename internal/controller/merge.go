@@ -141,16 +141,19 @@ func mergeAllowedOut(r, toMerge frr.AllowedOut) (frr.AllowedOut, error) {
 		}
 	}
 
+	// We map each prefix to its AS-Path Prepend configuration string.
+	// If multiple modifiers target the exact same prefix, they must specify
+	// identical prepend parameters. Conflicting values for the same prefix are rejected.
 	asPathPrependForPrefix := map[string]string{}
 	for _, p := range r.AsPathPrependPrefixesModifiers {
-		// Convert to a single string for comparison (format '<PrependASN> x <PrependCount>')
-		prependStr := fmt.Sprintf("%s x %d", p.PrependASN, p.PrependCount)
+		// Convert to a single string for comparison
+		prependStr := asPathPrependPrefixListKey(p.PrependASN, p.PrependCount, p.IPFamily)
 		for _, prefix := range p.Prefixes.UnsortedList() {
 			asPathPrependForPrefix[prefix] = prependStr
 		}
 	}
 	for _, p := range toMerge.AsPathPrependPrefixesModifiers {
-		prependStr := fmt.Sprintf("%s x %d", p.PrependASN, p.PrependCount)
+		prependStr := asPathPrependPrefixListKey(p.PrependASN, p.PrependCount, p.IPFamily)
 		for _, prefix := range p.Prefixes.UnsortedList() {
 			if existing, ok := asPathPrependForPrefix[prefix]; ok && existing != prependStr {
 				return frr.AllowedOut{}, fmt.Errorf("multiple as-path prepends (%s != %s) specified for prefix %s", existing, prependStr, prefix)

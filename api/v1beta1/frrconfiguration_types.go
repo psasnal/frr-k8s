@@ -364,11 +364,13 @@ type CommunityPrefixes struct {
 // AsPathPrependPrefixes is a list of prefixes associated with an AS path prepending.
 type AsPathPrependPrefixes struct {
 	// Prefixes is the list of prefixes associated with the AS path prepending.
+	// +required
 	// +kubebuilder:validation:MinItems=1
-	// +kubebuilder:validation:Format="cidr"
+	// +kubebuilder:validation:items:Format="cidr"
 	Prefixes []string `json:"prefixes,omitempty"`
 
 	// AsPathPrepend is the number of times to prepend the local ASN to the AS path for the prefixes.
+	// +required
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=10
 	AsPathPrepend uint8 `json:"asPathPrepend,omitempty"`

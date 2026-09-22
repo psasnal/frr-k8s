@@ -447,6 +447,11 @@ func prefixesWithAsPathPrependToFRR(toAdd map[string]frr.AsPathPrependPrefixList
 			return nil, fmt.Errorf("AsPathPrepend can't be zero")
 		}
 
+		ipfamilyPrefixes := ipfamily.FilterPrefixes(prefixes.Prefixes, ipFamily)
+		if len(ipfamilyPrefixes) == 0 {
+			continue
+		}
+
 		asnToPrepend := fmt.Sprintf("%d", routerASN)
 		if neighbor.LocalASN > 0 {
 			asnToPrepend = fmt.Sprintf("%d", neighbor.LocalASN)
@@ -467,10 +472,6 @@ func prefixesWithAsPathPrependToFRR(toAdd map[string]frr.AsPathPrependPrefixList
 			PrependCount: prependCount,
 		}
 
-		ipfamilyPrefixes := ipfamily.FilterPrefixes(prefixes.Prefixes, ipFamily)
-		if len(ipfamilyPrefixes) == 0 {
-			continue
-		}
 		for _, prefix := range ipfamilyPrefixes {
 			if !routerPrefixes.Has(prefix) {
 				return nil, fmt.Errorf("AS path prepending %d associated to non existing prefix %s", prefixes.AsPathPrepend, prefix)
@@ -649,6 +650,20 @@ func validateOutgoingPrefixes(prefixesInRouter []string, routerConfig v1beta1.Ro
 					return fmt.Errorf("prefix %s is configured with both local preference %d and %d", prefixes.Prefixes, existing, prefixes.LocalPref)
 				}
 				localPrefForPrefix[p] = prefixes.LocalPref
+			}
+		}
+
+		asPathPrependForPrefix := map[string]uint8{}
+		for _, prefixes := range n.ToAdvertise.PrefixesWithAsPathPrepend {
+			if err := validatePrefixesForNeighborFamily(prefixes.Prefixes, neighborFamily); err != nil {
+				return fmt.Errorf("invalid prefixes %s for asPathPrepend %d for neighbor %s, err: %w", prefixes.Prefixes, prefixes.AsPathPrepend, neighborName(n), err)
+			}
+
+			for _, p := range prefixes.Prefixes { // check for multiple as path prepend on the same prefix
+				if existing, ok := asPathPrependForPrefix[p]; ok && existing != prefixes.AsPathPrepend {
+					return fmt.Errorf("prefix %s is configured with both as path prepend %d and %d", prefixes.Prefixes, existing, prefixes.AsPathPrepend)
+				}
+				asPathPrependForPrefix[p] = prefixes.AsPathPrepend
 			}
 		}
 

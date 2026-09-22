@@ -3,9 +3,10 @@
 package tests
 
 import (
+	"strconv"
+
 	"github.com/onsi/ginkgo/v2"
 	"go.universe.tf/e2etest/pkg/frr/container"
-	"strings"
 
 	frrk8sv1beta1 "github.com/metallb/frr-k8s/api/v1beta1"
 	"github.com/metallb/frrk8stests/pkg/config"
@@ -477,7 +478,7 @@ var _ = ginkgo.Describe("Advertisement", func() {
 				modifyPeers: func(ppV4 []config.Peer, ppV6 []config.Peer) {
 					for i := range ppV4 {
 						// Only apply AsPathPrepend to eBGP neighbors to avoid loop-prevention drops on iBGP
-						if strings.Contains(ppV4[i].FRR.Name, "ebgp") {
+						if iseBGPPeer(ppV4[i]) {
 							ppV4[i].Neigh.ToAdvertise.Allowed.Mode = frrk8sv1beta1.AllowAll
 							ppV4[i].Neigh.ToAdvertise.PrefixesWithAsPathPrepend = []frrk8sv1beta1.AsPathPrependPrefixes{
 								{
@@ -493,15 +494,18 @@ var _ = ginkgo.Describe("Advertisement", func() {
 					}
 				},
 				validate: func(ppV4 []config.Peer, ppV6 []config.Peer, nodes []v1.Node) {
+					eBGPPeersValidated := 0
 					for _, p := range ppV4 {
 						// Only validate eBGP neighbors
-						if strings.Contains(p.FRR.Name, "ebgp") {
+						if iseBGPPeer(p) {
+							eBGPPeersValidated++
 							ValidatePrefixesForNeighbor(p.FRR, nodes, "192.168.0.0/24", "192.168.1.0/24")
-							ValidateNeighborAsPathPrependForPrefix(p.FRR, "192.168.0.0", 3, ipfamily.IPv4)
-							ValidateNeighborAsPathPrependForPrefix(p.FRR, "192.168.1.0", 2, ipfamily.IPv4)
-							ValidateNeighborAsPathPrependForPrefix(p.FRR, "192.168.2.0", 0, ipfamily.IPv4) // no AsPathPrepend for prefix 192.168.2.0
+							ValidateNeighborAsPathPrependForPrefix(p.FRR, "192.168.0.0", strconv.Itoa(infra.FRRK8sASN), 3, ipfamily.IPv4)
+							ValidateNeighborAsPathPrependForPrefix(p.FRR, "192.168.1.0", strconv.Itoa(infra.FRRK8sASN), 2, ipfamily.IPv4)
+							ValidateNeighborAsPathPrependForPrefix(p.FRR, "192.168.2.0", strconv.Itoa(infra.FRRK8sASN), 0, ipfamily.IPv4) // no AsPathPrepend for prefix 192.168.2.0
 						}
 					}
+					Expect(eBGPPeersValidated).To(BeNumerically(">", 0), "expected to test at least one eBGP peer")
 				},
 				splitCfg: splitByAsPathPrepend,
 			}),
@@ -513,7 +517,7 @@ var _ = ginkgo.Describe("Advertisement", func() {
 				modifyPeers: func(ppV4 []config.Peer, ppV6 []config.Peer) {
 					for i := range ppV4 {
 						// Only apply AsPathPrepend to eBGP neighbors to avoid loop-prevention drops on iBGP
-						if strings.Contains(ppV4[i].FRR.Name, "ebgp") {
+						if iseBGPPeer(ppV4[i]) {
 							ppV4[i].Neigh.ToAdvertise.Allowed.Mode = frrk8sv1beta1.AllowRestricted
 							ppV4[i].Neigh.ToAdvertise.Allowed.Prefixes = []string{"192.168.0.0/24", "192.168.1.0/24", "192.168.2.0/24", "192.168.3.0/24"}
 							ppV4[i].Neigh.ToAdvertise.PrefixesWithAsPathPrepend = []frrk8sv1beta1.AsPathPrependPrefixes{
@@ -530,16 +534,19 @@ var _ = ginkgo.Describe("Advertisement", func() {
 					}
 				},
 				validate: func(ppV4 []config.Peer, ppV6 []config.Peer, nodes []v1.Node) {
+					eBGPPeersValidated := 0
+					// Only validate eBGP neighbors
 					for _, p := range ppV4 {
-						// Only validate eBGP neighbors
-						if strings.Contains(p.FRR.Name, "ebgp") {
+						if iseBGPPeer(p) {
+							eBGPPeersValidated++
 							ValidatePrefixesForNeighbor(p.FRR, nodes, "192.168.0.0/24", "192.168.1.0/24", "192.168.2.0/24", "192.168.3.0/24")
-							ValidateNeighborAsPathPrependForPrefix(p.FRR, "192.168.0.0", 3, ipfamily.IPv4)
-							ValidateNeighborAsPathPrependForPrefix(p.FRR, "192.168.1.0", 2, ipfamily.IPv4)
-							ValidateNeighborAsPathPrependForPrefix(p.FRR, "192.168.2.0", 2, ipfamily.IPv4)
-							ValidateNeighborAsPathPrependForPrefix(p.FRR, "192.168.3.0", 0, ipfamily.IPv4) // no AsPathPrepend for prefix 192.168.3.0
+							ValidateNeighborAsPathPrependForPrefix(p.FRR, "192.168.0.0", strconv.Itoa(infra.FRRK8sASN), 3, ipfamily.IPv4)
+							ValidateNeighborAsPathPrependForPrefix(p.FRR, "192.168.1.0", strconv.Itoa(infra.FRRK8sASN), 2, ipfamily.IPv4)
+							ValidateNeighborAsPathPrependForPrefix(p.FRR, "192.168.2.0", strconv.Itoa(infra.FRRK8sASN), 2, ipfamily.IPv4)
+							ValidateNeighborAsPathPrependForPrefix(p.FRR, "192.168.3.0", strconv.Itoa(infra.FRRK8sASN), 0, ipfamily.IPv4) // no AsPathPrepend for prefix 192.168.3.0
 						}
 					}
+					Expect(eBGPPeersValidated).To(BeNumerically(">", 0), "expected to test at least one eBGP peer")
 				},
 				splitCfg: splitByAsPathPrepend,
 			}),
@@ -847,6 +854,11 @@ var _ = ginkgo.Describe("Advertisement", func() {
 		)
 	})
 })
+
+func iseBGPPeer(peer config.Peer) bool {
+	// If the external router's ASN is different from the Kubernetes cluster's ASN, it is eBGP
+	return peer.FRR.RouterConfig.ASN != uint32(infra.FRRK8sASN)
+}
 
 func nextHopPeerIPOnSameNetwork(peers []config.Peer, peerIndex int) (string, bool) {
 	for offset := 1; offset < len(peers); offset++ {

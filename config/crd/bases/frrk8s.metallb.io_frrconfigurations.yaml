@@ -711,11 +711,14 @@ spec:
                                         prefixes:
                                           description: Prefixes is the list of prefixes
                                             associated with the AS path prepending.
-                                          format: cidr
                                           items:
+                                            format: cidr
                                             type: string
                                           minItems: 1
                                           type: array
+                                      required:
+                                      - asPathPrepend
+                                      - prefixes
                                       type: object
                                     type: array
                                   withCommunity:

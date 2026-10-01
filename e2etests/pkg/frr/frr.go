@@ -167,12 +167,11 @@ func (f *FRR) hasEVPNRoutes(vtyshCmd string, expectedRoutes map[string]string) e
 	return nil
 }
 
-func AsPathPrependForPrefix(neigh frrcontainer.FRR, prefix string, ipfam ipfamily.Family, expectedASN string) (uint8, error) {
-	// Run the command inside the external FRR container
+func AsPathPrependListForPrefix(neigh frrcontainer.FRR, prefix string, ipfam ipfamily.Family, expectedASN string) ([]string, error) {
 	cmd := fmt.Sprintf("vtysh -c 'show bgp %s unicast %s json'", ipfam, prefix)
 	out, err := neigh.Executor.Exec("sh", "-c", cmd)
 	if err != nil {
-		return 0, fmt.Errorf("failed to execute vtysh: %w", err)
+		return nil, fmt.Errorf("failed to execute vtysh: %w", err)
 	}
 
 	// Define a minimal struct to parse just the AS Path from FRR's JSON output
@@ -186,32 +185,22 @@ func AsPathPrependForPrefix(neigh frrcontainer.FRR, prefix string, ipfam ipfamil
 
 	// Unmarshal the JSON
 	if err := json.Unmarshal([]byte(out), &routeData); err != nil {
-		return 0, fmt.Errorf("failed to parse FRR JSON: %w", err)
+		return nil, fmt.Errorf("failed to parse FRR JSON: %w", err)
 	}
 
 	if len(routeData.Paths) == 0 {
-		return 0, fmt.Errorf("no paths found for prefix %s", prefix)
+		return nil, fmt.Errorf("no paths found for prefix %s", prefix)
 	}
 
 	// Extract the AS Path string (e.g., "65000 65000 65000 65000")
 	asPathStr := routeData.Paths[0].AsPath.String
 
 	if strings.TrimSpace(asPathStr) == "" {
-		return 0, nil // No ASNs in the path
+		return nil, fmt.Errorf("no ASNs in the path for prefix %s", prefix)
 	}
 
-	// Count the ASNs.
-	// If the base ASN is added once natively, and we prepend 3 times, there are 4 ASNs total.
-	// So prependCount = Total ASNs - 1
 	asnList := strings.Fields(asPathStr)
-	prependCount := len(asnList) - 1
-
-	// Verify that the prepended elements actually match the expected ASN
-	for i := range prependCount {
-		if asnList[i] != expectedASN {
-			return 0, fmt.Errorf("invalid AS in path at index %d: expected %s, got %s (full path: %s)", i, expectedASN, asnList[i], asPathStr)
-		}
-	}
-
-	return uint8(prependCount), nil
+	// Exclude the last ASN (the base ASN).
+	// E.g. if the base ASN is added once natively, and we prepend 3 times, there are 4 ASNs total.
+	return asnList[:len(asnList)-1], nil
 }

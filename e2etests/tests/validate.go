@@ -176,16 +176,22 @@ func ValidateNeighborLocalPrefForPrefix(neigh frrcontainer.FRR, prefix string, e
 	}, 5*time.Second, time.Second).ShouldNot(HaveOccurred())
 }
 
-func ValidateNeighborAsPathPrependForPrefix(neigh frrcontainer.FRR, prefix string, expectedASN string, expectedAsPathPrepend uint8, ipfam ipfamily.Family) {
+func ValidateNeighborAsPathPrependForPrefix(neigh frrcontainer.FRR, prefix string, expectedASN string, expectedAsPathPrependCount int, ipfam ipfamily.Family) {
 	ginkgo.By(fmt.Sprintf("Checking asPathPrepend for prefix %s on neighbor %s", prefix, neigh.Name))
 	Eventually(func() error {
-		asPathPrepend, err := localfrr.AsPathPrependForPrefix(neigh, prefix, ipfam, expectedASN)
+		asPathPrependList, err := localfrr.AsPathPrependListForPrefix(neigh, prefix, ipfam, expectedASN)
 		if err != nil {
 			return err
 		}
 
-		if asPathPrepend != expectedAsPathPrepend {
-			return fmt.Errorf("asPathPrepend %d for prefix %s on neighbor %s does not equal %d", asPathPrepend, prefix, neigh.Name, expectedAsPathPrepend)
+		if len(asPathPrependList) != expectedAsPathPrependCount {
+			return fmt.Errorf("invalid count of ASN prepends: expected %d, got %d", len(asPathPrependList), expectedAsPathPrependCount)
+		}
+
+		for i := range len(asPathPrependList) {
+			if asPathPrependList[i] != expectedASN {
+				return fmt.Errorf("invalid AS in path at index %d: expected %s, got %s (full path: %s)", i, expectedASN, asPathPrependList[i], asPathPrependList)
+			}
 		}
 
 		return nil

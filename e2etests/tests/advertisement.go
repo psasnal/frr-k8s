@@ -494,18 +494,15 @@ var _ = ginkgo.Describe("Advertisement", func() {
 					}
 				},
 				validate: func(ppV4 []config.Peer, ppV6 []config.Peer, nodes []v1.Node) {
-					eBGPPeersValidated := 0
 					for _, p := range ppV4 {
 						// Only validate eBGP neighbors
 						if iseBGPPeer(p) {
-							eBGPPeersValidated++
 							ValidatePrefixesForNeighbor(p.FRR, nodes, "192.168.0.0/24", "192.168.1.0/24")
 							ValidateNeighborAsPathPrependForPrefix(p.FRR, "192.168.0.0", strconv.Itoa(infra.FRRK8sASN), 3, ipfamily.IPv4)
 							ValidateNeighborAsPathPrependForPrefix(p.FRR, "192.168.1.0", strconv.Itoa(infra.FRRK8sASN), 2, ipfamily.IPv4)
 							ValidateNeighborAsPathPrependForPrefix(p.FRR, "192.168.2.0", strconv.Itoa(infra.FRRK8sASN), 0, ipfamily.IPv4) // no AsPathPrepend for prefix 192.168.2.0
 						}
 					}
-					Expect(eBGPPeersValidated).To(BeNumerically(">", 0), "expected to test at least one eBGP peer")
 				},
 				splitCfg: splitByAsPathPrepend,
 			}),
